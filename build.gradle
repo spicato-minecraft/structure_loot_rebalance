@@ -22,7 +22,7 @@ loom {
 	splitEnvironmentSourceSets()
 
 	mods {
-		"mending_rebalance" {
+		"structure_loot_rebalance" {
 			sourceSet sourceSets.main
 			sourceSet sourceSets.client
 		}
