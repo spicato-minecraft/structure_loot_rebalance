@@ -1,0 +1,38 @@
+{
+	"schemaVersion": 1,
+	"id": "mending_rebalance",
+	"version": "${version}",
+	"name": "mending_rebalance",
+	"description": "Rebalances the Mending enchantment in Minecraft.",
+	"authors": [
+		"Me!"
+	],
+	"contact": {
+		"homepage": "https://fabricmc.net/",
+		"sources": "https://github.com/FabricMC/fabric-example-mod"
+	},
+	"license": "CC0-1.0",
+	"icon": "assets/mending_rebalance/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"mending_rebalance.Mending_rebalance"
+		],
+		"client": [
+			"mending_rebalance.Mending_rebalanceClient"
+		]
+	},
+	"mixins": [
+		"mending_rebalance.mixins.json",
+		{
+			"config": "mending_rebalance.client.mixins.json",
+			"environment": "client"
+		}
+	],
+	"depends": {
+		"fabricloader": ">=0.18.4",
+		"minecraft": "~1.21.10",
+		"java": ">=21",
+		"fabric-api": "*"
+	}
+}

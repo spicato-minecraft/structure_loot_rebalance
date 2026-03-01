@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mending Rebalance — Testing Checklist</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0f1419;
+      --surface: #1a2332;
+      --surface-hover: #243044;
+      --border: #2d3a4d;
+      --text: #e6edf3;
+      --text-muted: #8b9cb3;
+      --accent: #58a6ff;
+      --accent-dim: #388bfd66;
+      --success: #3fb950;
+      --success-bg: #23863633;
+      --warning: #d29922;
+      --mono: 'JetBrains Mono', monospace;
+      --sans: 'Outfit', system-ui, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--sans);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+    }
+
+    header {
+      margin-bottom: 2rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    h1 {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+    }
+
+    .subtitle {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    .progress-bar {
+      margin-top: 1rem;
+      height: 6px;
+      background: var(--surface);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--success));
+      border-radius: 3px;
+      transition: width 0.3s ease;
+    }
+
+    .progress-text {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 0.35rem;
+    }
+
+    .section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      margin-bottom: 1rem;
+      overflow: hidden;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 1.25rem;
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.15s;
+    }
+
+    .section-header:hover {
+      background: var(--surface-hover);
+    }
+
+    .section-title {
+      font-weight: 600;
+      font-size: 1rem;
+    }
+
+    .section-badge {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      background: var(--border);
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+    }
+
+    .section-badge.done {
+      background: var(--success-bg);
+      color: var(--success);
+    }
+
+    .section-content {
+      padding: 0 1.25rem 1.25rem;
+    }
+
+    .section.collapsed .section-content {
+      display: none;
+    }
+
+    .section-toggle {
+      transition: transform 0.2s;
+      color: var(--text-muted);
+    }
+
+    .section.collapsed .section-toggle {
+      transform: rotate(-90deg);
+    }
+
+    .test-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .test-item:last-child {
+      border-bottom: none;
+    }
+
+    .checkbox-wrap {
+      flex-shrink: 0;
+      margin-top: 0.15rem;
+    }
+
+    .checkbox {
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--border);
+      border-radius: 5px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s;
+    }
+
+    .checkbox:hover {
+      border-color: var(--accent);
+    }
+
+    .checkbox.checked {
+      background: var(--success);
+      border-color: var(--success);
+    }
+
+    .checkbox.checked::after {
+      content: '✓';
+      color: white;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .test-body {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .test-id {
+      font-size: 0.75rem;
+      color: var(--accent);
+      font-family: var(--mono);
+      margin-bottom: 0.2rem;
+    }
+
+    .test-name {
+      font-weight: 500;
+      margin-bottom: 0.25rem;
+    }
+
+    .test-detail {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .test-detail strong {
+      color: var(--text);
+    }
+
+    .command-block {
+      margin-top: 0.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .command {
+      font-family: var(--mono);
+      font-size: 0.8rem;
+      background: var(--bg);
+      padding: 0.5rem 0.75rem;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      flex: 1;
+      overflow-x: auto;
+      white-space: nowrap;
+    }
+
+    .copy-btn {
+      flex-shrink: 0;
+      padding: 0.4rem 0.6rem;
+      font-size: 0.75rem;
+      font-family: var(--sans);
+      background: var(--accent-dim);
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .copy-btn:hover {
+      background: var(--accent);
+      color: white;
+    }
+
+    .copy-btn.copied {
+      background: var(--success);
+      border-color: var(--success);
+      color: white;
+    }
+
+    .notes {
+      margin-top: 2rem;
+      padding: 1rem 1.25rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    .notes h3 {
+      font-size: 0.9rem;
+      color: var(--text);
+      margin-bottom: 0.5rem;
+    }
+
+    .notes ul {
+      margin-left: 1.25rem;
+    }
+
+    .notes li {
+      margin-bottom: 0.25rem;
+    }
+
+    .smoke-test {
+      margin-top: 1.5rem;
+      padding: 1rem;
+      background: var(--accent-dim);
+      border: 1px solid var(--accent);
+      border-radius: 8px;
+    }
+
+    .smoke-test h3 {
+      font-size: 0.9rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .smoke-test ol {
+      margin-left: 1.25rem;
+      font-size: 0.9rem;
+    }
+
+    .smoke-test li {
+      margin-bottom: 0.25rem;
+    }
+
+    .reset-btn {
+      margin-top: 1.5rem;
+      padding: 0.5rem 1rem;
+      font-size: 0.85rem;
+      font-family: var(--sans);
+      background: transparent;
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .reset-btn:hover {
+      color: var(--text);
+      border-color: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Mending Rebalance — Testing Checklist</h1>
+      <p class="subtitle">Run the mod with <code style="font-family: var(--mono); font-size: 0.85em;">./gradlew runClient</code> before testing.</p>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+      </div>
+      <p class="progress-text" id="progressText">0 / 0 completed</p>
+    </header>
+
+    <div id="sections"></div>
+
+    <div class="notes">
+      <h3>Notes</h3>
+      <ul>
+        <li><strong>Villager trades:</strong> The villager trade modifier is planned but not yet implemented. Librarians can still offer mending.</li>
+        <li><strong>Config path:</strong> Dev: <code>run/config/mending_rebalance/loot-injections.json</code> · Prod: <code>config/mending_rebalance/loot-injections.json</code></li>
+        <li><strong>Log location:</strong> <code>run/logs/latest.log</code></li>
+      </ul>
+    </div>
+
+    <button class="reset-btn" id="resetBtn">Reset all checkboxes</button>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'mending_rebalance_testing';
+    const LootTableIds = ['ancient_city_ice_box', 'stronghold_library', 'ancient_city', 'bastion_treasure', 'buried_treasure', 'shipwreck_treasure', 'end_city_treasure'];
+
+    const data = [
+      {
+        id: 'startup',
+        title: '1. Startup & Load',
+        tests: [
+          { id: '1.1', name: 'Launch game with mod', expected: 'Game starts without crash' },
+          { id: '1.2', name: 'Check latest.log', expected: 'Line contains `Registered N loot table injection entries` (N > 0)' },
+          { id: '1.3', name: 'Check latest.log', expected: 'No ERROR or WARN related to mending_rebalance config' }
+        ]
+      },
+      {
+        id: 'config',
+        title: '2. Config',
+        tests: [
+          { id: '2.1', name: 'Default config created', steps: 'Delete run/config/mending_rebalance/loot-injections.json if it exists. Launch game.', expected: 'File is created' },
+          { id: '2.2', name: 'Config structure', steps: 'Open loot-injections.json', expected: 'Valid JSON with entries array; each entry has item, weight, loot_table' },
+          { id: '2.3', name: 'Invalid config fallback', steps: 'Corrupt config (e.g. add "invalid": or remove a bracket). Launch game.', expected: 'Game loads; log shows fallback message; mod uses defaults' },
+          { id: '2.4', name: 'Empty entries', steps: 'Set "entries": [] in config. Launch game.', expected: 'Game loads; no crash; no mending in chests' }
+        ]
+      },
+      {
+        id: 'loot-primary',
+        title: '3. Loot Injection — Primary Sources (weight 10)',
+        tests: [
+          { id: '3.1', name: 'Ancient city ice box', command: '/loot give @s loot minecraft:chests/ancient_city_ice_box', expected: 'At least one Mending enchanted book (run 5–10 times)' },
+          { id: '3.2', name: 'Stronghold library', command: '/loot give @s loot minecraft:chests/stronghold_library', expected: 'At least one Mending enchanted book (run 5–10 times)' }
+        ]
+      },
+      {
+        id: 'loot-mid',
+        title: '3. Loot Injection — Mid-Tier (weight 2)',
+        tests: [
+          { id: '3.3', name: 'Ancient city', command: '/loot give @s loot minecraft:chests/ancient_city', expected: 'Occasionally a Mending enchanted book' },
+          { id: '3.4', name: 'Bastion treasure', command: '/loot give @s loot minecraft:chests/bastion_treasure', expected: 'Occasionally a Mending enchanted book' }
+        ]
+      },
+      {
+        id: 'loot-rare',
+        title: '3. Loot Injection — Rare Sources',
+        tests: [
+          { id: '3.5', name: 'Buried treasure', command: '/loot give @s loot minecraft:chests/buried_treasure', expected: 'Rarely a Mending enchanted book (run 10+ times)' },
+          { id: '3.6', name: 'Shipwreck', command: '/loot give @s loot minecraft:chests/shipwreck_treasure', expected: 'Very rarely a Mending enchanted book' },
+          { id: '3.7', name: 'End city (excluded)', command: '/loot give @s loot minecraft:chests/end_city_treasure', expected: 'No mending books (vanilla; not in config)' }
+        ]
+      },
+      {
+        id: 'config-custom',
+        title: '4. Config Customization',
+        tests: [
+          { id: '4.1', name: 'Add custom item', steps: 'Add entry: {"item":"minecraft:diamond","weight":5,"loot_table":"minecraft:chests/simple_dungeon"}. Restart.', expected: '/loot give sometimes yields diamonds' },
+          { id: '4.2', name: 'Disable injection', steps: 'Set "entries":[]. Restart.', expected: 'No mending in any structure chests' },
+          { id: '4.3', name: 'Change weight', steps: 'Set stronghold_library weight to 100. Restart.', expected: 'Mending appears much more often' }
+        ]
+      },
+      {
+        id: 'vanilla',
+        title: '5. Vanilla Loot Preservation',
+        tests: [
+          { id: '5.1', name: 'Stronghold library variety', command: '/loot give @s loot minecraft:chests/stronghold_library', expected: 'Still contains books, paper, maps, compasses, etc.' },
+          { id: '5.2', name: 'Bastion treasure variety', command: '/loot give @s loot minecraft:chests/bastion_treasure', expected: 'Still contains netherite scrap, gold, diamond gear, etc.' }
+        ]
+      },
+      {
+        id: 'playability',
+        title: '6. Playability',
+        tests: [
+          { id: '6.1', name: 'Create new world', expected: 'World creates and loads' },
+          { id: '6.2', name: 'Join world', expected: 'No lag spikes or crashes' },
+          { id: '6.3', name: 'Find structure chest', expected: 'Chest opens; loot generates; may include mending book' },
+          { id: '6.4', name: 'Mending book usability', expected: 'Enchantment applies correctly on anvil' }
+        ]
+      },
+      {
+        id: 'edge',
+        title: '7. Edge Cases',
+        tests: [
+          { id: '7.1', name: 'Missing config dir', steps: 'Delete run/config/mending_rebalance/. Launch.', expected: 'Config dir and file recreated' },
+          { id: '7.2', name: 'Malformed JSON', steps: 'Change "weight": 10 to "weight": "ten". Launch.', expected: 'Fallback to defaults; no crash' },
+          { id: '7.3', name: 'Invalid loot table ID', steps: 'Add entry with nonexistent loot_table. Launch.', expected: 'Mod loads; no crash' }
+        ]
+      }
+    ];
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        return raw ? JSON.parse(raw) : {};
+      } catch {
+        return {};
+      }
+    }
+
+    function saveState(state) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    }
+
+    let state = loadState();
+
+    function toggle(id) {
+      state[id] = !state[id];
+      saveState(state);
+      updateProgress();
+      renderCheckbox(id);
+    }
+
+    function renderCheckbox(id) {
+      const el = document.getElementById(`cb-${id}`);
+      if (el) el.classList.toggle('checked', state[id]);
+    }
+
+    function updateProgress() {
+      let total = 0, done = 0;
+      data.forEach(s => {
+        s.tests.forEach(t => {
+          total++;
+          if (state[t.id]) done++;
+        });
+      });
+      document.getElementById('progressFill').style.width = total ? `${(done / total) * 100}%` : '0%';
+      document.getElementById('progressText').textContent = `${done} / ${total} completed`;
+    }
+
+    function copyCommand(cmd, btn) {
+      navigator.clipboard.writeText(cmd).then(() => {
+        btn.textContent = 'Copied!';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.textContent = 'Copy';
+          btn.classList.remove('copied');
+        }, 1500);
+      });
+    }
+
+    function render() {
+      const container = document.getElementById('sections');
+      container.innerHTML = '';
+
+      data.forEach((section, idx) => {
+        const done = section.tests.filter(t => state[t.id]).length;
+        const total = section.tests.length;
+
+        const sectionEl = document.createElement('div');
+        sectionEl.className = `section ${state[`_collapsed_${section.id}`] ? 'collapsed' : ''}`;
+        sectionEl.innerHTML = `
+          <div class="section-header" data-section="${section.id}">
+            <span class="section-title">${section.title}</span>
+            <span class="section-badge ${done === total ? 'done' : ''}">${done}/${total}</span>
+            <span class="section-toggle">▼</span>
+          </div>
+          <div class="section-content">
+            ${section.tests.map(t => `
+              <div class="test-item">
+                <div class="checkbox-wrap">
+                  <div class="checkbox ${state[t.id] ? 'checked' : ''}" id="cb-${t.id}" data-id="${t.id}" role="button" tabindex="0" aria-label="Mark ${t.id} as ${state[t.id] ? 'incomplete' : 'complete'}"></div>
+                </div>
+                <div class="test-body">
+                  <div class="test-id">${t.id}</div>
+                  <div class="test-name">${t.name}</div>
+                  ${t.steps ? `<div class="test-detail"><strong>Steps:</strong> ${t.steps}</div>` : ''}
+                  <div class="test-detail"><strong>Expected:</strong> ${t.expected}</div>
+                  ${t.command ? `
+                    <div class="command-block">
+                      <code class="command">${t.command}</code>
+                      <button class="copy-btn" type="button">Copy</button>
+                    </div>
+                  ` : ''}
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        `;
+        container.appendChild(sectionEl);
+      });
+
+      container.querySelectorAll('.section-header').forEach(h => {
+        h.addEventListener('click', () => {
+          const id = h.dataset.section;
+          state[`_collapsed_${id}`] = !state[`_collapsed_${id}`];
+          saveState(state);
+          document.querySelector(`.section-header[data-section="${id}"]`).closest('.section').classList.toggle('collapsed', state[`_collapsed_${id}`]);
+        });
+      });
+
+      container.querySelectorAll('.checkbox').forEach(cb => {
+        cb.addEventListener('click', () => toggle(cb.dataset.id));
+        cb.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(cb.dataset.id); } });
+      });
+
+      container.querySelectorAll('.command-block').forEach(block => {
+        const cmd = block.querySelector('.command').textContent;
+        const btn = block.querySelector('.copy-btn');
+        btn.addEventListener('click', () => copyCommand(cmd, btn));
+      });
+
+      updateProgress();
+    }
+
+    document.getElementById('resetBtn').addEventListener('click', () => {
+      if (confirm('Reset all checkboxes?')) {
+        state = {};
+        saveState(state);
+        render();
+      }
+    });
+
+    render();
+  </script>
+</body>
+</html>

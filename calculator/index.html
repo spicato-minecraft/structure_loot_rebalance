@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mending Odds Calculator</title>
+  <style>
+    :root {
+      --bg: #1a1a2e;
+      --surface: #16213e;
+      --surface-hover: #1f3460;
+      --text: #e8e8e8;
+      --text-muted: #a0a0a0;
+      --accent: #0f3460;
+      --border: #2a2a4a;
+      --input-bg: #0d1b2a;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 2rem;
+      line-height: 1.5;
+      min-height: 100vh;
+    }
+
+    h1 {
+      margin: 0 0 0.5rem;
+      font-size: 1.75rem;
+      font-weight: 600;
+    }
+
+    .subtitle {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+      margin-bottom: 2rem;
+    }
+
+    .layout {
+      display: grid;
+      gap: 2rem;
+      max-width: 900px;
+    }
+
+    @media (min-width: 700px) {
+      .layout {
+        grid-template-columns: 280px 1fr;
+      }
+    }
+
+    .config {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.25rem;
+      height: fit-content;
+    }
+
+    .config h2 {
+      margin: 0 0 1rem;
+      font-size: 1rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+    }
+
+    .field {
+      margin-bottom: 1rem;
+    }
+
+    .field:last-child {
+      margin-bottom: 0;
+    }
+
+    .field label {
+      display: block;
+      font-size: 0.85rem;
+      margin-bottom: 0.25rem;
+      color: var(--text-muted);
+    }
+
+    .field input {
+      width: 100%;
+      padding: 0.5rem 0.75rem;
+      background: var(--input-bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--text);
+      font-size: 0.95rem;
+    }
+
+    .field input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .field input[type="number"] {
+      -moz-appearance: textfield;
+    }
+
+    .field input[type="number"]::-webkit-outer-spin-button,
+    .field input[type="number"]::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    .results {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .results h2 {
+      margin: 0 0 0.5rem;
+      font-size: 1rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      transition: background 0.15s;
+    }
+
+    .card:hover {
+      background: var(--surface-hover);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .card-name {
+      font-weight: 600;
+      font-size: 1.05rem;
+    }
+
+    .card-odds {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #7eb8da;
+    }
+
+    .card-meta {
+      margin-top: 0.5rem;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .card-probs {
+      margin-top: 0.25rem;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .card-details {
+      margin-top: 0.5rem;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .card-details summary {
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .card-details[open] summary {
+      margin-bottom: 0.25rem;
+    }
+
+    .card-details ul {
+      margin: 0;
+      padding-left: 1.25rem;
+    }
+
+    .card-details li {
+      margin-bottom: 0.15rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>Mending Odds Calculator</h1>
+  <p class="subtitle">Tweak loot weights to see 1-in-X odds of finding mending at each structure.</p>
+
+  <div class="layout">
+    <section class="config">
+      <h2>Config</h2>
+      <div class="field">
+        <label for="pool">Pool total weight</label>
+        <input type="number" id="pool" min="1" step="1" value="50">
+      </div>
+      <div id="structure-weights"></div>
+    </section>
+
+    <section class="results">
+      <h2>Odds per structure</h2>
+      <div id="cards"></div>
+    </section>
+  </div>
+
+  <script>
+    const STRUCTURES = [
+      {
+        id: 'ancient_city',
+        name: 'Ancient city',
+        chests: 18,
+        rolls: 4,
+        defaultWeight: 2,
+        spawnInfo: '~1 per 15,000 chunks; deep dark only',
+        distance: '75% within 2000 blocks of spawn',
+      },
+      {
+        id: 'ancient_center',
+        name: 'Ancient city center',
+        chests: 1,
+        rolls: 4,
+        defaultWeight: 4,
+        spawnInfo: '1 per city',
+        distance: 'Same as city',
+      },
+      {
+        id: 'bastion',
+        name: 'Bastion remnant',
+        chests: 5,
+        rolls: 4,
+        defaultWeight: 2,
+        spawnInfo: '60% vs fortress; 368×368 block grid',
+        distance: 'Nether, varies',
+      },
+      {
+        id: 'treasure',
+        name: 'Treasure chest',
+        chests: 1,
+        rolls: 4,
+        defaultWeight: 1,
+        spawnInfo: '1 per buried treasure map',
+        distance: 'Map-dependent',
+      },
+      {
+        id: 'stronghold',
+        name: 'Stronghold library',
+        chests: 2.5,
+        rolls: 4,
+        defaultWeight: 1,
+        spawnInfo: '3 per world, ~1400 blocks from spawn',
+        distance: '~1000–2000 blocks',
+      },
+      {
+        id: 'shipwreck',
+        name: 'Shipwreck',
+        chests: 2,
+        rolls: 4,
+        defaultWeight: 1,
+        spawnInfo: 'Common in oceans',
+        distance: 'Coast/ocean',
+      },
+      {
+        id: 'ruins',
+        name: 'Underwater ruins',
+        chests: 1.2,
+        rolls: 4,
+        defaultWeight: 1,
+        spawnInfo: 'Common in oceans',
+        distance: 'Coast/ocean',
+      },
+    ];
+
+    function getInputs() {
+      const inputs = { pool: parseFloat(document.getElementById('pool').value) || 50 };
+      STRUCTURES.forEach(s => {
+        const el = document.getElementById('weight_' + s.id);
+        inputs[s.id] = el ? parseFloat(el.value) || 0 : s.defaultWeight;
+      });
+      return inputs;
+    }
+
+    function getWeight(struct, inputs) {
+      return inputs[struct.id] ?? 0;
+    }
+
+    function calcOdds(struct, inputs) {
+      const weight = getWeight(struct, inputs);
+      const pool = inputs.pool;
+      if (weight <= 0) {
+        return { pRoll: 0, pChest: 0, pStruct: 0, oneIn: Infinity };
+      }
+      const pRoll = weight / (weight + pool);
+      const pChest = 1 - Math.pow(1 - pRoll, struct.rolls);
+      const pStruct = 1 - Math.pow(1 - pChest, struct.chests);
+      const oneIn = pStruct > 0 ? Math.round(1 / pStruct) : Infinity;
+      return { pRoll, pChest, pStruct, oneIn };
+    }
+
+    function formatPercent(p) {
+      if (p >= 0.01) return (p * 100).toFixed(2) + '%';
+      if (p > 0) return (p * 100).toFixed(4) + '%';
+      return '0%';
+    }
+
+    function render() {
+      const inputs = getInputs();
+      const container = document.getElementById('cards');
+      container.innerHTML = STRUCTURES.map(struct => {
+        const odds = calcOdds(struct, inputs);
+        const oneInDisplay = odds.oneIn === Infinity ? '—' : `1 in ${odds.oneIn.toLocaleString()}`;
+        return `
+          <div class="card" data-id="${struct.id}">
+            <div class="card-header">
+              <span class="card-name">${struct.name}</span>
+              <span class="card-odds">${oneInDisplay}</span>
+            </div>
+            <div class="card-meta">~${struct.chests} chests avg · ${struct.rolls} rolls/chest</div>
+            <div class="card-probs">Per chest: ${formatPercent(odds.pChest)} · Per structure: ${formatPercent(odds.pStruct)}</div>
+            <details class="card-details">
+              <summary>Spawn info</summary>
+              <ul>
+                <li>${struct.spawnInfo}</li>
+                <li>${struct.distance}</li>
+              </ul>
+            </details>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderConfig() {
+      const container = document.getElementById('structure-weights');
+      container.innerHTML = STRUCTURES.map(s => `
+        <div class="field">
+          <label for="weight_${s.id}">${s.name}</label>
+          <input type="number" id="weight_${s.id}" min="0" step="0.5" value="${s.defaultWeight}">
+        </div>
+      `).join('');
+      STRUCTURES.forEach(s => {
+        const el = document.getElementById('weight_' + s.id);
+        if (el) {
+          el.addEventListener('input', render);
+          el.addEventListener('change', render);
+        }
+      });
+      const poolEl = document.getElementById('pool');
+      if (poolEl) {
+        poolEl.addEventListener('input', render);
+        poolEl.addEventListener('change', render);
+      }
+    }
+
+    function init() {
+      renderConfig();
+      render();
+    }
+
+    init();
+  </script>
+</body>
+</html>
