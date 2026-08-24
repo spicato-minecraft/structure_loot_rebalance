@@ -1,6 +1,6 @@
 package structure_loot_rebalance.config;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -14,7 +14,7 @@ import java.util.Map;
 public final class DefaultLootModifications {
 
     /** All structure chest loot table IDs to scaffold in the default config. */
-    public static final List<ResourceLocation> STRUCTURE_LOOT_TABLES = List.of(
+    public static final List<Identifier> STRUCTURE_LOOT_TABLES = List.of(
             resourceLocation("minecraft:chests/ancient_city"),
             resourceLocation("minecraft:chests/ancient_city_ice_box"),
             resourceLocation("minecraft:chests/stronghold_corridor"),
@@ -42,10 +42,10 @@ public final class DefaultLootModifications {
      * Builds the default loot modifications. First default set: mending book
      * additions from the original loot-injections.json plan.
      */
-    public static Map<ResourceLocation, LootTableModificationConfig> getDefaults() {
-        Map<ResourceLocation, LootTableModificationConfig> defaults = new LinkedHashMap<>();
+    public static Map<Identifier, LootTableModificationConfig> getDefaults() {
+        Map<Identifier, LootTableModificationConfig> defaults = new LinkedHashMap<>();
 
-        for (ResourceLocation tableId : STRUCTURE_LOOT_TABLES) {
+        for (Identifier tableId : STRUCTURE_LOOT_TABLES) {
             List<AddEntryConfig> add = new ArrayList<>();
             List<RemoveEntryConfig> remove = List.of();
             List<ModifyEntryConfig> modify = List.of();
@@ -72,7 +72,7 @@ public final class DefaultLootModifications {
 
     private static void addMendingBookIfTarget(
             List<AddEntryConfig> add,
-            ResourceLocation tableId,
+            Identifier tableId,
             String pathSuffix,
             double weight
     ) {
@@ -81,8 +81,8 @@ public final class DefaultLootModifications {
         }
     }
 
-    private static ResourceLocation resourceLocation(String id) {
-        return ResourceLocation.parse(id);
+    private static Identifier resourceLocation(String id) {
+        return Identifier.parse(id);
     }
 
     /** Config DTO for a single loot table's add/remove/modify. */

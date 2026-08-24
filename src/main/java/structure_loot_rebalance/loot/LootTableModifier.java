@@ -14,7 +14,7 @@ import net.fabricmc.fabric.api.loot.v3.LootTableEvents;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.storage.loot.LootPool;
@@ -39,9 +39,9 @@ import java.util.stream.Collectors;
  */
 public final class LootTableModifier {
 
-    private final Map<ResourceLocation, LootTableModificationConfig> modifications;
+    private final Map<Identifier, LootTableModificationConfig> modifications;
 
-    public LootTableModifier(Map<ResourceLocation, LootTableModificationConfig> modifications) {
+    public LootTableModifier(Map<Identifier, LootTableModificationConfig> modifications) {
         this.modifications = modifications;
     }
 
@@ -50,7 +50,7 @@ public final class LootTableModifier {
             if (!source.isBuiltin()) {
                 return;
             }
-            ResourceLocation tableId = key.location();
+            Identifier tableId = key.identifier();
             LootTableModificationConfig config = modifications.get(tableId);
             if (config == null) {
                 return;
@@ -63,15 +63,15 @@ public final class LootTableModifier {
             }
         });
 
-        java.util.Set<ResourceLocation> tablesWithModifyOrRemove = modifications.entrySet().stream()
+        java.util.Set<Identifier> tablesWithModifyOrRemove = modifications.entrySet().stream()
                 .filter(e -> !e.getValue().modify().isEmpty() || !e.getValue().remove().isEmpty())
                 .map(Map.Entry::getKey)
                 .collect(java.util.stream.Collectors.toSet());
 
         if (!tablesWithModifyOrRemove.isEmpty()) {
             LootTableEvents.MODIFY_DROPS.register((holder, context, drops) -> {
-                ResourceLocation tableId = holder.unwrapKey()
-                        .map(ResourceKey::location)
+                Identifier tableId = holder.unwrapKey()
+                        .map(ResourceKey::identifier)
                         .orElse(null);
                 if (tableId == null) return;
 
@@ -83,8 +83,8 @@ public final class LootTableModifier {
 
                 for (ModifyEntryConfig modify : config.modify()) {
                     if (modify.excludeEnchantments().isEmpty()) continue;
-                    Set<ResourceLocation> excludeIds = modify.excludeEnchantments().stream()
-                            .map(ResourceLocation::tryParse)
+                    Set<Identifier> excludeIds = modify.excludeEnchantments().stream()
+                            .map(Identifier::tryParse)
                             .filter(id -> id != null)
                             .collect(Collectors.toSet());
                     drops.removeIf(stack -> shouldExcludeEnchantments(stack, modify.item(), excludeIds, registryAccess));
@@ -96,7 +96,7 @@ public final class LootTableModifier {
         }
     }
 
-    private static boolean shouldExcludeEnchantments(ItemStack stack, String targetItem, Set<ResourceLocation> excludeEnchantments,
+    private static boolean shouldExcludeEnchantments(ItemStack stack, String targetItem, Set<Identifier> excludeEnchantments,
                                                      net.minecraft.core.RegistryAccess registryAccess) {
         if (stack.isEmpty()) return false;
         if (!targetItem.equals(net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(stack.getItem()).toString())
@@ -105,7 +105,7 @@ public final class LootTableModifier {
         }
         var enchantments = stack.getEnchantments();
         for (var e : enchantments.entrySet()) {
-            ResourceLocation enchId = e.getKey().unwrapKey().map(ResourceKey::location).orElse(null);
+            Identifier enchId = e.getKey().unwrapKey().map(ResourceKey::identifier).orElse(null);
             if (enchId != null && excludeEnchantments.contains(enchId)) {
                 return true;
             }
@@ -122,11 +122,11 @@ public final class LootTableModifier {
         }
         if (remove.enchantment() != null) {
             var enchantments = stack.getEnchantments();
-            ResourceLocation targetEnch = ResourceLocation.tryParse(remove.enchantment());
+            Identifier targetEnch = Identifier.tryParse(remove.enchantment());
             if (targetEnch == null) return false;
             boolean hasEnchantment = false;
             for (var e : enchantments.entrySet()) {
-                ResourceLocation enchId = e.getKey().unwrapKey().map(ResourceKey::location).orElse(null);
+                Identifier enchId = e.getKey().unwrapKey().map(ResourceKey::identifier).orElse(null);
                 if (targetEnch.equals(enchId)) {
                     if (remove.enchantmentLevel() != null) {
                         int level = e.getIntValue();
@@ -156,7 +156,7 @@ public final class LootTableModifier {
 
         if (item instanceof EnchantedBookSpec spec) {
             var enchantRegistry = registries.lookupOrThrow(Registries.ENCHANTMENT);
-            var enchantId = ResourceLocation.tryParse(spec.enchantment());
+            var enchantId = Identifier.tryParse(spec.enchantment());
             if (enchantId == null) {
                 LOGGER.warn("Invalid enchantment ID in add entry: {}", spec.enchantment());
                 return null;
@@ -183,7 +183,7 @@ public final class LootTableModifier {
         }
 
         if (item instanceof SimpleItemSpec spec) {
-            ResourceLocation itemId = ResourceLocation.tryParse(spec.id());
+            Identifier itemId = Identifier.tryParse(spec.id());
             if (itemId == null) {
                 LOGGER.warn("Invalid item ID in add entry: {}", spec.id());
                 return null;

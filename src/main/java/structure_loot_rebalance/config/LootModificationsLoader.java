@@ -2,7 +2,7 @@ package structure_loot_rebalance.config;
 
 import structure_loot_rebalance.StructureLootRebalance;
 import structure_loot_rebalance.config.DefaultLootModifications.LootTableModificationConfig;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -20,7 +20,7 @@ public final class LootModificationsLoader {
         Path configPath = configDir.resolve(modId).resolve("loot-modifications.json");
         Files.createDirectories(configPath.getParent());
 
-        Map<ResourceLocation, LootTableModificationConfig> defaults = DefaultLootModifications.getDefaults();
+        Map<Identifier, LootTableModificationConfig> defaults = DefaultLootModifications.getDefaults();
 
         if (!Files.exists(configPath)) {
             LootModificationsConfig defaultConfig = new LootModificationsConfig(defaults);
@@ -39,8 +39,8 @@ public final class LootModificationsLoader {
         }
 
         // Merge: start with defaults, overlay user config (user overrides per table)
-        Map<ResourceLocation, LootTableModificationConfig> merged = new LinkedHashMap<>(defaults);
-        for (Map.Entry<ResourceLocation, LootTableModificationConfig> entry : userConfig.lootModifications().entrySet()) {
+        Map<Identifier, LootTableModificationConfig> merged = new LinkedHashMap<>(defaults);
+        for (Map.Entry<Identifier, LootTableModificationConfig> entry : userConfig.lootModifications().entrySet()) {
             merged.put(entry.getKey(), entry.getValue());
         }
         return new LootModificationsConfig(merged);

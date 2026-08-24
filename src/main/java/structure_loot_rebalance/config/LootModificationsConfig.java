@@ -17,7 +17,7 @@ import structure_loot_rebalance.config.DefaultLootModifications.LootTableModific
 import structure_loot_rebalance.config.DefaultLootModifications.ModifyEntryConfig;
 import structure_loot_rebalance.config.DefaultLootModifications.RemoveEntryConfig;
 import structure_loot_rebalance.config.DefaultLootModifications.SimpleItemSpec;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -28,7 +28,7 @@ import java.util.Map;
  * Root config for loot-modifications.json. Parses and serializes the
  * loot_modifications map keyed by loot table ID.
  */
-public record LootModificationsConfig(Map<ResourceLocation, LootTableModificationConfig> lootModifications) {
+public record LootModificationsConfig(Map<Identifier, LootTableModificationConfig> lootModifications) {
 
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
@@ -36,11 +36,11 @@ public record LootModificationsConfig(Map<ResourceLocation, LootTableModificatio
         try {
             JsonObject root = JsonParser.parseString(json).getAsJsonObject();
             JsonObject mods = root.getAsJsonObject("loot_modifications");
-            Map<ResourceLocation, LootTableModificationConfig> map = new LinkedHashMap<>();
+            Map<Identifier, LootTableModificationConfig> map = new LinkedHashMap<>();
 
             if (mods != null) {
                 for (Map.Entry<String, JsonElement> entry : mods.entrySet()) {
-                    ResourceLocation tableId = ResourceLocation.tryParse(entry.getKey());
+                    Identifier tableId = Identifier.tryParse(entry.getKey());
                     if (tableId != null) {
                         LootTableModificationConfig table = parseTableModification(entry.getValue().getAsJsonObject());
                         map.put(tableId, table);
@@ -166,7 +166,7 @@ public record LootModificationsConfig(Map<ResourceLocation, LootTableModificatio
     public String toJson() {
         JsonObject root = new JsonObject();
         JsonObject mods = new JsonObject();
-        for (Map.Entry<ResourceLocation, LootTableModificationConfig> entry : lootModifications.entrySet()) {
+        for (Map.Entry<Identifier, LootTableModificationConfig> entry : lootModifications.entrySet()) {
             mods.add(entry.getKey().toString(), serializeTableModification(entry.getValue()));
         }
         root.add("loot_modifications", mods);
