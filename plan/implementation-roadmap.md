@@ -174,6 +174,11 @@ Two tracks that can **partially overlap**:
 
 ---
 
+## Wave 2 — Core runtime ✅
+
+- **WS-D** — `PriorityEnchantBookFunction`, `PriorityEnchantBookRoll`, `ModEnchantedBooks`
+- **WS-C** — `LootTableModifier` one-pool injection + `MODIFY_DROPS` vanilla book strip
+
 ## Wave 3 — Tests (parallel sub-streams)
 
 ### WS-E — Unit tests (7 Notion tasks under epic)

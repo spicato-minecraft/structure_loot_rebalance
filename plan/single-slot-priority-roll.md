@@ -1,5 +1,7 @@
 # Single-Slot Priority Roll Model
 
+> **Superseded** by [`multi-pool-structure-clear.md`](multi-pool-structure-clear.md) — multi-pool independent rolls with 95/80/60, 60/40/50 structure-clear targets. Kept for history.
+
 Design decision (locked): **one mod enchant book roll per chest**, using a **priority partition** so higher tiers are not diluted by lower-tier volume.
 
 **Implementation roadmap:** [`implementation-roadmap.md`](implementation-roadmap.md)

@@ -1,246 +1,168 @@
 package structure_loot_rebalance.config;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import structure_loot_rebalance.StructureLootRebalance;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonParser;
-import structure_loot_rebalance.config.DefaultLootModifications.AddEntryConfig;
-import structure_loot_rebalance.config.DefaultLootModifications.EnchantedBookSpec;
-import structure_loot_rebalance.config.DefaultLootModifications.ItemSpec;
-import structure_loot_rebalance.config.DefaultLootModifications.LootTableModificationConfig;
-import structure_loot_rebalance.config.DefaultLootModifications.ModifyEntryConfig;
-import structure_loot_rebalance.config.DefaultLootModifications.RemoveEntryConfig;
-import structure_loot_rebalance.config.DefaultLootModifications.SimpleItemSpec;
 import net.minecraft.resources.Identifier;
+import structure_loot_rebalance.StructureLootRebalance;
 
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
- * Root config for loot-modifications.json. Parses and serializes the
- * loot_modifications map keyed by loot table ID.
+ * Root config for loot-modifications.json (config v5).
  */
-public record LootModificationsConfig(Map<Identifier, LootTableModificationConfig> lootModifications) {
+public record LootModificationsConfig(Map<Identifier, LootTableConfig> lootModifications) {
 
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
+	private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
-    public static LootModificationsConfig load(String json) {
-        try {
-            JsonObject root = JsonParser.parseString(json).getAsJsonObject();
-            JsonObject mods = root.getAsJsonObject("loot_modifications");
-            Map<Identifier, LootTableModificationConfig> map = new LinkedHashMap<>();
+	public static LootModificationsConfig load(String json) {
+		try {
+			JsonObject root = JsonParser.parseString(json).getAsJsonObject();
+			JsonObject mods = root.getAsJsonObject("loot_modifications");
+			Map<Identifier, LootTableConfig> map = new LinkedHashMap<>();
 
-            if (mods != null) {
-                for (Map.Entry<String, JsonElement> entry : mods.entrySet()) {
-                    Identifier tableId = Identifier.tryParse(entry.getKey());
-                    if (tableId != null) {
-                        LootTableModificationConfig table = parseTableModification(entry.getValue().getAsJsonObject());
-                        map.put(tableId, table);
-                    }
-                }
-            }
+			if (mods != null) {
+				for (Map.Entry<String, JsonElement> entry : mods.entrySet()) {
+					Identifier tableId = Identifier.tryParse(entry.getKey());
+					if (tableId == null) {
+						StructureLootRebalance.LOGGER.warn("Skipping invalid loot table id: {}", entry.getKey());
+						continue;
+					}
+					try {
+						LootTableConfig table = parseTableConfig(entry.getValue().getAsJsonObject());
+						map.put(tableId, table);
+					} catch (Exception ex) {
+						StructureLootRebalance.LOGGER.warn("Skipping invalid table config for {}: {}", entry.getKey(), ex.getMessage());
+					}
+				}
+			}
 
-            return new LootModificationsConfig(map);
-        } catch (Exception e) {
-            throw new JsonParseException("Failed to parse loot modifications config", e);
-        }
-    }
+			return new LootModificationsConfig(map);
+		} catch (Exception e) {
+			throw new JsonParseException("Failed to parse loot modifications config", e);
+		}
+	}
 
-    private static LootTableModificationConfig parseTableModification(JsonObject obj) {
-        List<AddEntryConfig> add = parseAddList(obj.getAsJsonArray("add"));
-        List<RemoveEntryConfig> remove = parseRemoveList(obj.getAsJsonArray("remove"));
-        List<ModifyEntryConfig> modify = parseModifyList(obj.getAsJsonArray("modify"));
-        return new LootTableModificationConfig(add, remove, modify);
-    }
+	private static LootTableConfig parseTableConfig(JsonObject obj) {
+		LootTier tier = parseTier(obj);
+		String structureId = requiredString(obj, "structure_id");
+		int lootEvents = requiredPositiveInt(obj, "structure_loot_events");
+		boolean mendingEnabled = !obj.has("mending_enabled") || obj.get("mending_enabled").getAsBoolean();
+		double rateMultiplier = obj.has("rate_multiplier") ? obj.get("rate_multiplier").getAsDouble() : 1.0;
+		Map<String, Integer> baseWeights = parseBaseWeights(obj.getAsJsonObject("base_weights"));
+		LootTheme theme = obj.has("theme") && !obj.get("theme").isJsonNull()
+				? LootTheme.fromId(obj.get("theme").getAsString())
+				: null;
+		double themeWeightMultiplier = obj.has("theme_weight_multiplier")
+				? obj.get("theme_weight_multiplier").getAsDouble()
+				: LootTableConfig.DEFAULT_THEME_WEIGHT_MULTIPLIER;
+		Double mendingExpected = obj.has("mending_expected") && !obj.get("mending_expected").isJsonNull()
+				? obj.get("mending_expected").getAsDouble()
+				: null;
 
-    private static List<AddEntryConfig> parseAddList(JsonElement elem) {
-        List<AddEntryConfig> list = new ArrayList<>();
-        if (elem == null || !elem.isJsonArray()) return list;
-        for (JsonElement e : elem.getAsJsonArray()) {
-            try {
-                list.add(parseAddEntry(e.getAsJsonObject()));
-            } catch (Exception ex) {
-                StructureLootRebalance.LOGGER.warn("Skipping invalid add entry: {}", ex.getMessage());
-            }
-        }
-        return list;
-    }
+		return new LootTableConfig(
+				tier, structureId, lootEvents, mendingEnabled, baseWeights, rateMultiplier, theme,
+				themeWeightMultiplier, mendingExpected
+		);
+	}
 
-    private static AddEntryConfig parseAddEntry(JsonObject obj) {
-        ItemSpec item = parseItemSpec(obj.get("item"));
-        double weight = obj.has("weight") ? obj.get("weight").getAsDouble() : 1.0;
-        if (weight <= 0) {
-            StructureLootRebalance.LOGGER.warn("Invalid weight {} in add entry, using 1.0", weight);
-            weight = 1.0;
-        }
-        int qMin = 1;
-        int qMax = 1;
-        if (obj.has("quantity")) {
-            JsonElement q = obj.get("quantity");
-            if (q.isJsonArray()) {
-                JsonArray arr = q.getAsJsonArray();
-                qMin = arr.size() > 0 ? arr.get(0).getAsInt() : 1;
-                qMax = arr.size() > 1 ? arr.get(1).getAsInt() : qMin;
-            } else {
-                qMin = qMax = q.getAsInt();
-            }
-        }
-        return new AddEntryConfig(item, weight, qMin, qMax);
-    }
+	private static LootTier parseTier(JsonObject obj) {
+		if (!obj.has("tier")) {
+			throw new JsonParseException("Missing tier");
+		}
+		int tier = obj.get("tier").getAsInt();
+		return switch (tier) {
+			case 1 -> obj.has("rate_multiplier") && obj.get("rate_multiplier").getAsDouble() < 1.0
+					? LootTier.TIER_1_RARE
+					: LootTier.TIER_1;
+			case 2 -> LootTier.TIER_2;
+			case 3 -> LootTier.TIER_3;
+			default -> throw new JsonParseException("Invalid tier: " + tier);
+		};
+	}
 
-    private static ItemSpec parseItemSpec(JsonElement elem) {
-        if (elem == null) return new SimpleItemSpec("minecraft:air");
-        if (elem.isJsonPrimitive()) {
-            return new SimpleItemSpec(elem.getAsString());
-        }
-        JsonObject o = elem.getAsJsonObject();
-        if (o.has("type") && "enchanted_book".equals(o.get("type").getAsString())) {
-            String enchantment = o.has("enchantment") ? o.get("enchantment").getAsString() : "minecraft:mending";
-            int level = o.has("level") ? o.get("level").getAsInt() : 1;
-            return new EnchantedBookSpec(enchantment, level);
-        }
-        return new SimpleItemSpec(o.has("id") ? o.get("id").getAsString() : "minecraft:air");
-    }
+	private static Map<String, Integer> parseBaseWeights(JsonObject weights) {
+		if (weights == null) {
+			return LootTableConfig.BASE_WEIGHTS;
+		}
+		Map<String, Integer> map = parseOptionalWeights(weights);
+		return map.isEmpty() ? LootTableConfig.BASE_WEIGHTS : map;
+	}
 
-    private static List<RemoveEntryConfig> parseRemoveList(JsonElement elem) {
-        List<RemoveEntryConfig> list = new ArrayList<>();
-        if (elem == null || !elem.isJsonArray()) return list;
-        for (JsonElement e : elem.getAsJsonArray()) {
-            try {
-                JsonObject o = e.getAsJsonObject();
-                String item = o.has("item") ? o.get("item").getAsString() : null;
-                if (item != null) {
-                    String enchantment = o.has("enchantment") ? o.get("enchantment").getAsString() : null;
-                    Object enchantmentLevel = o.has("enchantment_level") ? parseEnchantmentLevel(o.get("enchantment_level")) : null;
-                    Integer weight = o.has("weight") ? o.get("weight").getAsInt() : null;
-                    list.add(new RemoveEntryConfig(item, enchantment, enchantmentLevel, weight));
-                }
-            } catch (Exception ex) {
-                StructureLootRebalance.LOGGER.warn("Skipping invalid remove entry: {}", ex.getMessage());
-            }
-        }
-        return list;
-    }
+	private static Map<String, Integer> parseOptionalWeights(JsonObject weights) {
+		if (weights == null) {
+			return Map.of();
+		}
+		Map<String, Integer> map = new LinkedHashMap<>();
+		for (Map.Entry<String, JsonElement> entry : weights.entrySet()) {
+			int weight = entry.getValue().getAsInt();
+			if (weight > 0) {
+				map.put(entry.getKey(), weight);
+			}
+		}
+		return map.isEmpty() ? Map.of() : Map.copyOf(map);
+	}
 
-    private static Object parseEnchantmentLevel(JsonElement e) {
-        if (e.isJsonArray()) {
-            JsonArray a = e.getAsJsonArray();
-            return a.size() >= 2
-                    ? List.of(a.get(0).getAsInt(), a.get(1).getAsInt())
-                    : (a.size() == 1 ? a.get(0).getAsInt() : 1);
-        }
-        return e.getAsInt();
-    }
+	private static String requiredString(JsonObject obj, String key) {
+		if (!obj.has(key)) {
+			throw new JsonParseException("Missing " + key);
+		}
+		return obj.get(key).getAsString();
+	}
 
-    private static List<ModifyEntryConfig> parseModifyList(JsonElement elem) {
-        List<ModifyEntryConfig> list = new ArrayList<>();
-        if (elem == null || !elem.isJsonArray()) return list;
-        for (JsonElement e : elem.getAsJsonArray()) {
-            try {
-                JsonObject o = e.getAsJsonObject();
-                String item = o.has("item") ? o.get("item").getAsString() : null;
-                List<String> exclude = new ArrayList<>();
-                if (o.has("exclude_enchantments")) {
-                    for (JsonElement x : o.getAsJsonArray("exclude_enchantments")) {
-                        exclude.add(x.getAsString());
-                    }
-                }
-                if (item != null) {
-                    list.add(new ModifyEntryConfig(item, exclude));
-                }
-            } catch (Exception ex) {
-                StructureLootRebalance.LOGGER.warn("Skipping invalid modify entry: {}", ex.getMessage());
-            }
-        }
-        return list;
-    }
+	private static int requiredPositiveInt(JsonObject obj, String key) {
+		if (!obj.has(key)) {
+			throw new JsonParseException("Missing " + key);
+		}
+		int value = obj.get(key).getAsInt();
+		if (value < 1) {
+			throw new JsonParseException(key + " must be >= 1");
+		}
+		return value;
+	}
 
-    public String toJson() {
-        JsonObject root = new JsonObject();
-        JsonObject mods = new JsonObject();
-        for (Map.Entry<Identifier, LootTableModificationConfig> entry : lootModifications.entrySet()) {
-            mods.add(entry.getKey().toString(), serializeTableModification(entry.getValue()));
-        }
-        root.add("loot_modifications", mods);
-        return GSON.toJson(root);
-    }
+	public String toJson() {
+		JsonObject root = new JsonObject();
+		root.addProperty("schema_version", StructureClearRates.SCHEMA_VERSION);
+		JsonObject mods = new JsonObject();
+		for (Map.Entry<Identifier, LootTableConfig> entry : lootModifications.entrySet()) {
+			mods.add(entry.getKey().toString(), serializeTableConfig(entry.getValue()));
+		}
+		root.add("loot_modifications", mods);
+		return GSON.toJson(root);
+	}
 
-    private static JsonObject serializeTableModification(LootTableModificationConfig table) {
-        JsonObject obj = new JsonObject();
-        JsonArray addArr = new JsonArray();
-        for (AddEntryConfig a : table.add()) {
-            addArr.add(serializeAddEntry(a));
-        }
-        obj.add("add", addArr);
+	private static JsonObject serializeTableConfig(LootTableConfig config) {
+		JsonObject obj = new JsonObject();
+		obj.addProperty("tier", config.tier().level());
+		obj.addProperty("structure_id", config.structureId());
+		obj.addProperty("structure_loot_events", config.structureLootEvents());
+		obj.addProperty("mending_enabled", config.mendingEnabled());
+		if (config.rateMultiplier() != 1.0) {
+			obj.addProperty("rate_multiplier", config.rateMultiplier());
+		}
 
-        JsonArray removeArr = new JsonArray();
-        for (RemoveEntryConfig r : table.remove()) {
-            removeArr.add(serializeRemoveEntry(r));
-        }
-        obj.add("remove", removeArr);
+		if (!config.baseWeights().equals(LootTableConfig.BASE_WEIGHTS)) {
+			JsonObject weights = new JsonObject();
+			for (Map.Entry<String, Integer> weight : config.baseWeights().entrySet()) {
+				weights.addProperty(weight.getKey(), weight.getValue());
+			}
+			obj.add("base_weights", weights);
+		}
 
-        JsonArray modifyArr = new JsonArray();
-        for (ModifyEntryConfig m : table.modify()) {
-            modifyArr.add(serializeModifyEntry(m));
-        }
-        obj.add("modify", modifyArr);
-        return obj;
-    }
-
-    private static JsonObject serializeAddEntry(AddEntryConfig a) {
-        JsonObject obj = new JsonObject();
-        if (a.item() instanceof EnchantedBookSpec spec) {
-            JsonObject itemObj = new JsonObject();
-            itemObj.addProperty("type", "enchanted_book");
-            itemObj.addProperty("enchantment", spec.enchantment());
-            itemObj.addProperty("level", spec.level());
-            obj.add("item", itemObj);
-        } else if (a.item() instanceof SimpleItemSpec spec) {
-            obj.addProperty("item", spec.id());
-        }
-        obj.addProperty("weight", a.weight());
-        if (a.quantityMin() == a.quantityMax()) {
-            obj.addProperty("quantity", a.quantityMin());
-        } else {
-            JsonArray q = new JsonArray();
-            q.add(a.quantityMin());
-            q.add(a.quantityMax());
-            obj.add("quantity", q);
-        }
-        return obj;
-    }
-
-    private static JsonObject serializeRemoveEntry(RemoveEntryConfig r) {
-        JsonObject obj = new JsonObject();
-        obj.addProperty("item", r.item());
-        if (r.enchantment() != null) obj.addProperty("enchantment", r.enchantment());
-        if (r.enchantmentLevel() != null) {
-            if (r.enchantmentLevel() instanceof List<?> list) {
-                JsonArray arr = new JsonArray();
-                for (Object x : list) arr.add(((Number) x).intValue());
-                obj.add("enchantment_level", arr);
-            } else {
-                obj.addProperty("enchantment_level", ((Number) r.enchantmentLevel()).intValue());
-            }
-        }
-        if (r.weight() != null) obj.addProperty("weight", r.weight());
-        return obj;
-    }
-
-    private static JsonObject serializeModifyEntry(ModifyEntryConfig m) {
-        JsonObject obj = new JsonObject();
-        obj.addProperty("item", m.item());
-        JsonArray arr = new JsonArray();
-        for (String e : m.excludeEnchantments()) arr.add(e);
-        obj.add("exclude_enchantments", arr);
-        return obj;
-    }
+		if (config.theme() != null) {
+			obj.addProperty("theme", config.theme().id());
+		}
+		if (config.themeWeightMultiplier() != LootTableConfig.DEFAULT_THEME_WEIGHT_MULTIPLIER) {
+			obj.addProperty("theme_weight_multiplier", config.themeWeightMultiplier());
+		}
+		if (config.mendingExpectedPerClear() != null) {
+			obj.addProperty("mending_expected", config.mendingExpectedPerClear());
+		}
+		return obj;
+	}
 }
