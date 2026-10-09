@@ -9,47 +9,55 @@ import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.storage.loot.LootContext;
 import net.minecraft.world.level.storage.loot.functions.LootItemFunction;
-import net.minecraft.world.level.storage.loot.functions.LootItemFunctionType;
 import structure_loot_rebalance.StructureLootRebalance;
 
 /**
- * Applies a fixed Level I enchantment to an enchanted book stack.
+ * Applies one fixed enchantment level to an enchanted book stack.
  */
 public final class FixedEnchantBookFunction implements LootItemFunction {
 
 	public static final MapCodec<FixedEnchantBookFunction> CODEC = RecordCodecBuilder.mapCodec(instance ->
 			instance.group(
-					Codec.STRING.fieldOf("enchantment").forGetter(FixedEnchantBookFunction::enchantmentId)
+					Codec.STRING.fieldOf("enchantment").forGetter(FixedEnchantBookFunction::enchantmentId),
+					Codec.INT.optionalFieldOf("level", 1).forGetter(FixedEnchantBookFunction::level)
 			).apply(instance, FixedEnchantBookFunction::new)
 	);
-	public static final LootItemFunctionType<FixedEnchantBookFunction> TYPE =
-			new LootItemFunctionType<>(CODEC);
 
 	private final String enchantmentId;
+	private final int level;
 
 	public FixedEnchantBookFunction(String enchantmentId) {
+		this(enchantmentId, 1);
+	}
+
+	public FixedEnchantBookFunction(String enchantmentId, int level) {
 		this.enchantmentId = enchantmentId;
+		this.level = Math.max(1, level);
 	}
 
 	public static void register() {
 		Registry.register(
 				BuiltInRegistries.LOOT_FUNCTION_TYPE,
 				Identifier.fromNamespaceAndPath(StructureLootRebalance.MOD_ID, "fixed_enchant_book"),
-				TYPE
+				CODEC
 		);
+	}
+
+	@Override
+	public MapCodec<FixedEnchantBookFunction> codec() {
+		return CODEC;
 	}
 
 	public String enchantmentId() {
 		return enchantmentId;
 	}
 
-	@Override
-	public LootItemFunctionType<FixedEnchantBookFunction> getType() {
-		return TYPE;
+	public int level() {
+		return level;
 	}
 
 	@Override
 	public ItemStack apply(ItemStack stack, LootContext context) {
-		return ModEnchantedBooks.create(enchantmentId, 1, context.getResolver());
+		return ModEnchantedBooks.create(enchantmentId, level, context.getResolver());
 	}
 }

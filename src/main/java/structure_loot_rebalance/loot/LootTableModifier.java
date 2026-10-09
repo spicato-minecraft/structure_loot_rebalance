@@ -15,16 +15,17 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Injects primary / mending book pools per configured table and strips vanilla books.
+ * Injects catalog layers onto structure chests and strips vanilla books from those tables.
+ * Silk Touch removal and the enchanted-gear rate limiter stay on the same table set.
  */
 public final class LootTableModifier {
 
 	private static final int WEIGHT_SCALE = 10_000;
 
-	private final Map<Identifier, LootTableConfig> modifications;
+	private final CatalogLoot catalog;
 
-	public LootTableModifier(Map<Identifier, LootTableConfig> modifications) {
-		this.modifications = modifications;
+	public LootTableModifier(CatalogLoot catalog) {
+		this.catalog = catalog;
 	}
 
 	public void init() {
@@ -33,14 +34,13 @@ public final class LootTableModifier {
 				return;
 			}
 			Identifier tableId = key.identifier();
-			LootTableConfig config = modifications.get(tableId);
-			if (config == null) {
+			if (!catalog.modifies(tableId)) {
 				return;
 			}
-			addModBookPools(config, tableBuilder::withPool);
+			addCatalogPools(catalog, tableId, tableBuilder::withPool);
 		});
 
-		Set<Identifier> stripVanillaEnchantBooks = modifications.keySet();
+		Set<Identifier> stripVanillaEnchantBooks = catalog.modifiedTables();
 		LootTableEvents.MODIFY_DROPS.register((holder, context, drops) -> {
 			Identifier tableId = holder.unwrapKey()
 					.map(ResourceKey::identifier)
@@ -54,6 +54,25 @@ public final class LootTableModifier {
 				VanillaEnchantedGearRateLimiter.removeHalf(context, drops);
 			}
 		});
+	}
+
+	static int addCatalogPools(
+			CatalogLoot catalog,
+			Identifier tableId,
+			java.util.function.Consumer<LootPool.Builder> addPool
+	) {
+		int added = 0;
+		for (CatalogLoot.CatalogLayer layer : catalog.layers(tableId)) {
+			for (int copy = 0; copy < layer.copies(); copy++) {
+				LootPool.Builder pool = CatalogLootPools.pool(layer.entries());
+				if (pool == null) {
+					continue;
+				}
+				addPool.accept(pool);
+				added++;
+			}
+		}
+		return added;
 	}
 
 	static void addModBookPools(LootTableConfig config, java.util.function.Consumer<LootPool.Builder> addPool) {
@@ -127,10 +146,10 @@ public final class LootTableModifier {
 	}
 
 	public Set<Identifier> modifiedTableIds() {
-		return modifications.keySet();
+		return catalog.modifiedTables();
 	}
 
 	public int modifiedTableCount() {
-		return modifications.size();
+		return catalog.modifiedTables().size();
 	}
 }

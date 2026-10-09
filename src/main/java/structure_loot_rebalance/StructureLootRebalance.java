@@ -4,12 +4,13 @@ import net.fabricmc.api.ModInitializer;
 import net.fabricmc.loader.api.FabricLoader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import structure_loot_rebalance.config.LootModificationsConfig;
 import structure_loot_rebalance.config.LootModificationsLoader;
 import structure_loot_rebalance.config.MineshaftChestConfig;
 import structure_loot_rebalance.config.WorldgenConfigLoader;
+import structure_loot_rebalance.loot.CatalogLoot;
 import structure_loot_rebalance.loot.FixedEnchantBookFunction;
 import structure_loot_rebalance.loot.LootTableModifier;
+import structure_loot_rebalance.village.VillageProfessionChestProcessor;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -23,15 +24,17 @@ public class StructureLootRebalance implements ModInitializer {
 		Path configDir = FabricLoader.getInstance().getConfigDir();
 		try {
 			WorldgenConfigLoader.load();
+			VillageProfessionChestProcessor.register();
 			FixedEnchantBookFunction.register();
 			LootModificationsLoader.writeDefault(configDir, MOD_ID);
-			LootModificationsConfig config = LootModificationsLoader.load(configDir, MOD_ID);
-			LootTableModifier modifier = new LootTableModifier(config.lootModifications());
+			LootModificationsLoader.load(configDir, MOD_ID);
+			CatalogLoot catalog = CatalogLoot.loadBundled();
+			LootTableModifier modifier = new LootTableModifier(catalog);
 			modifier.init();
 
 			StructureLootRebalance.LOGGER.info(
-					"Registered {} structure loot tables with multi-pool enchant book rolls (mineshaft chest roll bound: {})",
-					config.lootModifications().size(),
+					"Registered {} structure loot tables from the 26.1 loot catalog (mineshaft chest roll bound: {})",
+					modifier.modifiedTableCount(),
 					MineshaftChestConfig.rollBound()
 			);
 		} catch (IOException e) {

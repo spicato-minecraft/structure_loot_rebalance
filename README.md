@@ -79,12 +79,16 @@ Vanilla mineshafts only roll chest minecarts at **1-in-100** per corridor sectio
 
 Lower bound → more chests (`20` ≈ 5% per roll, ~5–6 chests per typical shaft). Only **newly generated** chunks use the new rate.
 
+### Village profession chests
+
+Job-site houses (armorer, butcher, cartographer, temple, farm, fisher, fletcher, tannery, library, mason, shepherd, toolsmith, weaponsmith) place **one chest** if vanilla left the piece empty. Houses that already have a chest are unchanged. Librarian and farmer use mod tables `structure_loot_rebalance:chests/village/library` and `.../farm`; the other professions use vanilla village chest tables. Only newly generated villages are affected.
+
 ## Compatibility
 
-- **Minecraft:** 1.21.11
+- **Minecraft:** 26.1
 - **Fabric Loader:** ≥ 0.19.3
 - **Fabric API:** Required
-- **Java:** 21+
+- **Java:** 25+
 
 ## Build & test
 
@@ -107,10 +111,10 @@ Publishing uses [`.github/workflows/publish.yml`](.github/workflows/publish.yml)
 
 ## Branch policy
 
-Each supported Minecraft version has its own branch (e.g. `1.21.11`). Version branches are the source of truth.
+Each supported Minecraft version has its own branch (e.g. `26.1`). Version branches are the source of truth.
 
 ```bash
 git clone https://github.com/spicato-minecraft/structure_loot_rebalance.git
 cd structure_loot_rebalance
-git checkout 1.21.11
+git checkout 26.1
 ```
