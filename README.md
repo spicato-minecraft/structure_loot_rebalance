@@ -85,7 +85,7 @@ Job-site houses (armorer, butcher, cartographer, temple, farm, fisher, fletcher,
 
 ## Compatibility
 
-- **Minecraft:** 26.1
+- **Minecraft:** 26.2
 - **Fabric Loader:** ≥ 0.19.3
 - **Fabric API:** Required
 - **Java:** 25+
@@ -111,10 +111,10 @@ Publishing uses [`.github/workflows/publish.yml`](.github/workflows/publish.yml)
 
 ## Branch policy
 
-Each supported Minecraft version has its own branch (e.g. `26.1`). Version branches are the source of truth.
+Each supported Minecraft version has its own branch (e.g. `26.2`). Version branches are the source of truth.
 
 ```bash
 git clone https://github.com/spicato-minecraft/structure_loot_rebalance.git
 cd structure_loot_rebalance
-git checkout 26.1
+git checkout 26.2
 ```

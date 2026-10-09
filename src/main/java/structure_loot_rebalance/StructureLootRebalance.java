@@ -33,7 +33,7 @@ public class StructureLootRebalance implements ModInitializer {
 			modifier.init();
 
 			StructureLootRebalance.LOGGER.info(
-					"Registered {} structure loot tables from the 26.1 loot catalog (mineshaft chest roll bound: {})",
+					"Registered {} structure loot tables from the 26.2 loot catalog (mineshaft chest roll bound: {})",
 					modifier.modifiedTableCount(),
 					MineshaftChestConfig.rollBound()
 			);
