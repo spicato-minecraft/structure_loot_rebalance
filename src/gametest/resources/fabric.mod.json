@@ -1,0 +1,19 @@
+{
+	"schemaVersion": 1,
+	"id": "structure_loot_rebalance_test",
+	"version": "${version}",
+	"name": "Structure Loot Rebalance Game Tests",
+	"environment": "*",
+	"entrypoints": {
+		"fabric-gametest": [
+			"structure_loot_rebalance.gametest.ServerMixinApplySweep",
+			"structure_loot_rebalance.gametest.StrongholdTableHasModBooks",
+			"structure_loot_rebalance.gametest.LibrarianHousePlacesOneChest"
+		]
+	},
+	"depends": {
+		"structure_loot_rebalance": "*",
+		"fabric-api": "*",
+		"minecraft": "~26.2"
+	}
+}

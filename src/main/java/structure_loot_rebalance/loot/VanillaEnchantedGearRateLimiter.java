@@ -1,6 +1,7 @@
 package structure_loot_rebalance.loot;
 
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.equipment.Equippable;
@@ -18,11 +19,15 @@ public final class VanillaEnchantedGearRateLimiter {
 	}
 
 	static void removeHalf(LootContext context, java.util.List<ItemStack> drops) {
-		drops.removeIf(stack -> shouldRemove(context, stack));
+		removeHalf(context.getRandom(), drops);
 	}
 
-	private static boolean shouldRemove(LootContext context, ItemStack stack) {
-		return isCompetingVanillaGear(stack) && context.getRandom().nextFloat() >= KEEP_CHANCE;
+	static void removeHalf(RandomSource random, java.util.List<ItemStack> drops) {
+		drops.removeIf(stack -> shouldRemove(random, stack));
+	}
+
+	private static boolean shouldRemove(RandomSource random, ItemStack stack) {
+		return isCompetingVanillaGear(stack) && random.nextFloat() >= KEEP_CHANCE;
 	}
 
 	static boolean isCompetingVanillaGear(ItemStack stack) {
