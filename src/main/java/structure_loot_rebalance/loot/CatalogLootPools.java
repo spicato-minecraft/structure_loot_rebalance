@@ -10,12 +10,12 @@ import net.minecraft.world.level.storage.loot.LootTable;
 import net.minecraft.world.level.storage.loot.entries.EmptyLootItem;
 import net.minecraft.world.level.storage.loot.entries.LootItem;
 import net.minecraft.world.level.storage.loot.entries.LootPoolEntryContainer;
-import net.minecraft.world.level.storage.loot.entries.LootPoolSingletonContainer;
 import net.minecraft.world.level.storage.loot.entries.NestedLootTable;
+import net.minecraft.world.level.storage.loot.entries.UniformContainerBase;
 import net.minecraft.world.level.storage.loot.functions.SetItemCountFunction;
 import net.minecraft.world.level.storage.loot.functions.SetPotionFunction;
-import net.minecraft.world.level.storage.loot.providers.number.ConstantValue;
-import net.minecraft.world.level.storage.loot.providers.number.UniformGenerator;
+import net.minecraft.world.level.storage.loot.providers.number.ints.ContextIntProvider;
+import net.minecraft.world.level.storage.loot.providers.number.ints.ContextIntProviders;
 import structure_loot_rebalance.StructureLootRebalance;
 import structure_loot_rebalance.loot.CatalogLoot.CatalogEntry;
 
@@ -51,7 +51,7 @@ public final class CatalogLootPools {
 		return switch (entry.kind()) {
 			case EMPTY -> EmptyLootItem.emptyItem().setWeight(entry.weight());
 			case ITEM -> {
-				LootPoolSingletonContainer.Builder<?> item = itemEntry(entry);
+				UniformContainerBase.Builder<?> item = itemEntry(entry);
 				yield item == null ? null : item.setWeight(entry.weight());
 			}
 			case GROUP -> inline(andTable(entry.children()), entry.weight());
@@ -78,7 +78,7 @@ public final class CatalogLootPools {
 	private static int appendGuaranteed(LootTable.Builder table, CatalogEntry child) {
 		return switch (child.kind()) {
 			case ITEM -> {
-				LootPoolSingletonContainer.Builder<?> item = itemEntry(child);
+				UniformContainerBase.Builder<?> item = itemEntry(child);
 				if (item == null) {
 					yield 0;
 				}
@@ -112,7 +112,7 @@ public final class CatalogLootPools {
 		return LootTable.lootTable().withPool(nested).build();
 	}
 
-	private static LootPoolSingletonContainer.Builder<?> itemEntry(CatalogEntry entry) {
+	private static UniformContainerBase.Builder<?> itemEntry(CatalogEntry entry) {
 		if ("minecraft:silk_touch".equals(entry.enchant())) {
 			return null;
 		}
@@ -122,7 +122,7 @@ public final class CatalogLootPools {
 			return null;
 		}
 		Item item = BuiltInRegistries.ITEM.getValue(itemId);
-		LootPoolSingletonContainer.Builder<?> builder = LootItem.lootTableItem(item);
+		UniformContainerBase.Builder<?> builder = LootItem.lootTableItem(item);
 		if (entry.countMin() != 1 || entry.countMax() != 1) {
 			builder.apply(SetItemCountFunction.setCount(countProvider(entry.countMin(), entry.countMax())));
 		}
@@ -147,10 +147,10 @@ public final class CatalogLootPools {
 		});
 	}
 
-	private static net.minecraft.world.level.storage.loot.providers.number.NumberProvider countProvider(int min, int max) {
+	private static Holder<ContextIntProvider> countProvider(int min, int max) {
 		if (min == max) {
-			return ConstantValue.exactly(min);
+			return ContextIntProviders.exactly(min);
 		}
-		return UniformGenerator.between(min, max);
+		return ContextIntProviders.between(min, max);
 	}
 }

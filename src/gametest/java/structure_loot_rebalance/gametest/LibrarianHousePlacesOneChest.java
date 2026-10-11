@@ -38,7 +38,7 @@ public class LibrarianHousePlacesOneChest {
 	@GameTest(structure = "structure_loot_rebalance_test:library_room", maxTicks = 100)
 	public void librarianHousePlacesOneChest(GameTestHelper context) {
 		ServerLevel level = context.getLevel();
-		StructureTemplateManager templates = level.getStructureManager();
+		StructureTemplateManager templates = level.getStructureTemplateManager();
 		SinglePoolElement piece = new LibrarianHousePiece();
 		Vec3i size = piece.getSize(templates, net.minecraft.world.level.block.Rotation.NONE);
 		BlockPos origin = context.absolutePos(new BlockPos(1, 1, 1));

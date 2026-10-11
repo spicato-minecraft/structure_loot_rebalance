@@ -26,7 +26,7 @@ import java.util.regex.Pattern;
  */
 public final class CatalogLoot {
 
-	static final String SUPPORTED_VERSION = "26.2";
+	static final String SUPPORTED_VERSION = "26.3";
 	private static final String RESOURCE = "structure_loot_rebalance/loot_catalog.json";
 	private static final Pattern MENDING_ROLL = Pattern.compile("^slr:[^:]+:(minecraft:.+):mending$");
 

@@ -4,13 +4,14 @@ import com.google.gson.JsonElement;
 import com.mojang.datafixers.util.Either;
 import com.mojang.serialization.JsonOps;
 import net.fabricmc.fabric.api.gametest.v1.GameTest;
+import net.minecraft.core.Holder;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.resources.RegistryOps;
 import net.minecraft.world.level.storage.loot.BuiltInLootTables;
 import net.minecraft.world.level.storage.loot.LootPool;
 import net.minecraft.world.level.storage.loot.LootTable;
 import net.minecraft.world.level.storage.loot.entries.CompositeEntryBase;
-import net.minecraft.world.level.storage.loot.entries.LootPoolSingletonContainer;
+import net.minecraft.world.level.storage.loot.entries.LootPoolEntryContainer;
 import net.minecraft.world.level.storage.loot.entries.NestedLootTable;
 import net.minecraft.world.level.storage.loot.functions.LootItemFunction;
 import structure_loot_rebalance.loot.FixedEnchantBookFunction;
@@ -70,23 +71,27 @@ public class StrongholdTableHasModBooks {
 			functions.add(function);
 			return;
 		}
+		if (node instanceof Holder<?> holder) {
+			if (holder.isBound()) {
+				walk(holder.value(), seen, functions);
+			}
+			return;
+		}
 		if (node instanceof LootTable table) {
 			walk(read(table, "pools"), seen, functions);
-			walk(read(table, "functions"), seen, functions);
+			walk(read(table, "modifier"), seen, functions);
 			return;
 		}
 		if (node instanceof LootPool pool) {
 			walk(read(pool, "entries"), seen, functions);
-			walk(read(pool, "functions"), seen, functions);
+			walk(read(pool, "modifier"), seen, functions);
 			return;
+		}
+		if (node instanceof LootPoolEntryContainer entry) {
+			walk(read(entry, "modifier"), seen, functions);
 		}
 		if (node instanceof NestedLootTable nested) {
-			walk(read(nested, "functions"), seen, functions);
-			walk(read(nested, "contents"), seen, functions);
-			return;
-		}
-		if (node instanceof LootPoolSingletonContainer singleton) {
-			walk(read(singleton, "functions"), seen, functions);
+			walk(read(nested, "value"), seen, functions);
 			return;
 		}
 		if (node instanceof CompositeEntryBase composite) {
