@@ -13,6 +13,7 @@ A Fabric mod that gives explorers a **tool enchantment progression path** comple
 - **Fortune I** — **`fortune` theme on buried treasure only** (~50% chance per find)
 - **Feather Falling** and **Silk Touch** — villager-only (not structure loot)
 - **Shipwreck** — `shipwreck_treasure` only; Tier 1 + underwater theme (~1 book / 4 ships)
+- **Abandoned camp** — common chest, secret chest, and barrel share one Tier 1 rare clear (`n = 3`, 0.25×, ~0.6 books / camp)
 - **End loot untouched**; ominous trial vaults excluded
 
 ### Structure-clear expectations

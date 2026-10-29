@@ -117,11 +117,56 @@ class CatalogLootTest {
 		assertFalse(silkTouch);
 	}
 
+	@Test
+	void abandonedCampSharesOneRareBookRoll() throws Exception {
+		CatalogLoot catalog = CatalogLoot.loadBundled();
+		String[] tables = {
+				"minecraft:chests/abandoned_camp_common_chest",
+				"minecraft:chests/abandoned_camp_secret_chest",
+				"minecraft:barrels/abandoned_camp_barrel"
+		};
+
+		for (String tableId : tables) {
+			List<CatalogLayer> layers = catalog.layers(Identifier.parse(tableId));
+			assertEquals(1, layers.size(), tableId);
+			CatalogLayer primary = layers.getFirst();
+			assertTrue(primary.rollId().endsWith(":primary"), tableId);
+			assertEquals(1, primary.copies());
+			assertEquals(
+					List.of("minecraft:efficiency", "minecraft:unbreaking", "minecraft:protection"),
+					enchants(primary)
+			);
+			assertEquals(833, weight(primary, "minecraft:efficiency"));
+			assertEquals(625, weight(primary, "minecraft:unbreaking"));
+			assertEquals(625, weight(primary, "minecraft:protection"));
+			assertEquals(7917, primary.entries().stream()
+					.filter(entry -> entry.kind() == EntryKind.EMPTY)
+					.findFirst()
+					.orElseThrow()
+					.weight());
+			assertTrue(primary.entries().stream().noneMatch(entry -> "minecraft:mending".equals(entry.enchant())));
+			assertEquals(1, LootTableModifier.addCatalogPools(
+					catalog,
+					Identifier.parse(tableId),
+					pool -> {
+					}
+			));
+		}
+	}
+
 	private static List<String> enchants(CatalogLayer layer) {
 		return layer.entries().stream()
 				.map(CatalogEntry::enchant)
 				.filter(enchant -> enchant != null)
 				.toList();
+	}
+
+	private static int weight(CatalogLayer layer, String enchant) {
+		return layer.entries().stream()
+				.filter(entry -> enchant.equals(entry.enchant()))
+				.findFirst()
+				.orElseThrow()
+				.weight();
 	}
 
 	@SuppressWarnings("unchecked")

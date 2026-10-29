@@ -105,6 +105,27 @@ class StructureTierRegistryTest {
 	}
 
 	@Test
+	void abandonedCampSharesOneRareClear() {
+		var defaults = StructureTierRegistry.buildDefaults();
+		String[] tables = {
+				"minecraft:chests/abandoned_camp_common_chest",
+				"minecraft:chests/abandoned_camp_secret_chest",
+				"minecraft:barrels/abandoned_camp_barrel"
+		};
+
+		for (String tableId : tables) {
+			LootTableConfig camp = defaults.get(Identifier.parse(tableId));
+			assertNotNull(camp);
+			assertEquals(LootTier.TIER_1_RARE, camp.tier());
+			assertEquals("abandoned_camp", camp.structureId());
+			assertEquals(3, camp.structureLootEvents());
+			assertEquals(0.25, camp.rateMultiplier(), 0.0001);
+			assertFalse(camp.mendingEnabled());
+			assertEquals(2.5 * 0.25 / 3.0, StructureClearRates.forTable(camp).primaryPerRoll(), 0.0001);
+		}
+	}
+
+	@Test
 	void endCityAndOminousVaultAreAbsent() {
 		var defaults = StructureTierRegistry.buildDefaults();
 

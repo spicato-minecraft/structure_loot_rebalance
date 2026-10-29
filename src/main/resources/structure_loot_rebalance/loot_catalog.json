@@ -2060,6 +2060,114 @@
       ]
     },
     {
+      "id": "slr:abandoned_camp:minecraft:chests/abandoned_camp_common_chest:primary",
+      "entries": [
+        {
+          "kind": "item",
+          "weight": 833,
+          "item": "minecraft:enchanted_book",
+          "enchant": "minecraft:efficiency",
+          "enchant_level": 1,
+          "count_min": 1,
+          "count_max": 1
+        },
+        {
+          "kind": "item",
+          "weight": 625,
+          "item": "minecraft:enchanted_book",
+          "enchant": "minecraft:unbreaking",
+          "enchant_level": 1,
+          "count_min": 1,
+          "count_max": 1
+        },
+        {
+          "kind": "item",
+          "weight": 625,
+          "item": "minecraft:enchanted_book",
+          "enchant": "minecraft:protection",
+          "enchant_level": 1,
+          "count_min": 1,
+          "count_max": 1
+        },
+        {
+          "kind": "empty",
+          "weight": 7917
+        }
+      ]
+    },
+    {
+      "id": "slr:abandoned_camp:minecraft:chests/abandoned_camp_secret_chest:primary",
+      "entries": [
+        {
+          "kind": "item",
+          "weight": 833,
+          "item": "minecraft:enchanted_book",
+          "enchant": "minecraft:efficiency",
+          "enchant_level": 1,
+          "count_min": 1,
+          "count_max": 1
+        },
+        {
+          "kind": "item",
+          "weight": 625,
+          "item": "minecraft:enchanted_book",
+          "enchant": "minecraft:unbreaking",
+          "enchant_level": 1,
+          "count_min": 1,
+          "count_max": 1
+        },
+        {
+          "kind": "item",
+          "weight": 625,
+          "item": "minecraft:enchanted_book",
+          "enchant": "minecraft:protection",
+          "enchant_level": 1,
+          "count_min": 1,
+          "count_max": 1
+        },
+        {
+          "kind": "empty",
+          "weight": 7917
+        }
+      ]
+    },
+    {
+      "id": "slr:abandoned_camp:minecraft:barrels/abandoned_camp_barrel:primary",
+      "entries": [
+        {
+          "kind": "item",
+          "weight": 833,
+          "item": "minecraft:enchanted_book",
+          "enchant": "minecraft:efficiency",
+          "enchant_level": 1,
+          "count_min": 1,
+          "count_max": 1
+        },
+        {
+          "kind": "item",
+          "weight": 625,
+          "item": "minecraft:enchanted_book",
+          "enchant": "minecraft:unbreaking",
+          "enchant_level": 1,
+          "count_min": 1,
+          "count_max": 1
+        },
+        {
+          "kind": "item",
+          "weight": 625,
+          "item": "minecraft:enchanted_book",
+          "enchant": "minecraft:protection",
+          "enchant_level": 1,
+          "count_min": 1,
+          "count_max": 1
+        },
+        {
+          "kind": "empty",
+          "weight": 7917
+        }
+      ]
+    },
+    {
       "id": "vanilla:minecraft:chests/shipwreck_treasure:0",
       "entries": [
         {
@@ -6854,6 +6962,14 @@
       ]
     },
     {
+      "id": "bundle_abandoned_camp",
+      "rolls": [
+        "slr:abandoned_camp:minecraft:chests/abandoned_camp_common_chest:primary",
+        "slr:abandoned_camp:minecraft:chests/abandoned_camp_secret_chest:primary",
+        "slr:abandoned_camp:minecraft:barrels/abandoned_camp_barrel:primary"
+      ]
+    },
+    {
       "id": "bundle_shipwreck",
       "rolls": [
         "vanilla:minecraft:chests/shipwreck_treasure:0",
@@ -7035,7 +7151,10 @@
     "minecraft:chests/bastion_hoglin_stable": "bundle_bastion",
     "minecraft:chests/trial_chambers/supply": "bundle_trial_chambers_supply",
     "minecraft:chests/trial_chambers/corridor": "bundle_trial_chambers_supply",
-    "minecraft:chests/trial_chambers/reward": "bundle_trial_chambers_reward"
+    "minecraft:chests/trial_chambers/reward": "bundle_trial_chambers_reward",
+    "minecraft:chests/abandoned_camp_common_chest": "bundle_abandoned_camp",
+    "minecraft:chests/abandoned_camp_secret_chest": "bundle_abandoned_camp",
+    "minecraft:barrels/abandoned_camp_barrel": "bundle_abandoned_camp"
   },
   "structures": [
     {
@@ -7520,6 +7639,39 @@
           "expected_per_clear": 0.75,
           "copies": 1,
           "table": "minecraft:chests/ruined_portal"
+        }
+      ]
+    },
+    {
+      "id": "abandoned_camp",
+      "title": "Abandoned Camp",
+      "loot_events": 3,
+      "tables": [
+        "minecraft:chests/abandoned_camp_common_chest",
+        "minecraft:chests/abandoned_camp_secret_chest",
+        "minecraft:barrels/abandoned_camp_barrel"
+      ],
+      "layers": [
+        {
+          "roll": "slr:abandoned_camp:minecraft:chests/abandoned_camp_common_chest:primary",
+          "expected_per_clear": 0,
+          "copies": 1,
+          "table": "minecraft:chests/abandoned_camp_common_chest",
+          "source": "slr"
+        },
+        {
+          "roll": "slr:abandoned_camp:minecraft:chests/abandoned_camp_secret_chest:primary",
+          "expected_per_clear": 0,
+          "copies": 1,
+          "table": "minecraft:chests/abandoned_camp_secret_chest",
+          "source": "slr"
+        },
+        {
+          "roll": "slr:abandoned_camp:minecraft:barrels/abandoned_camp_barrel:primary",
+          "expected_per_clear": 0,
+          "copies": 1,
+          "table": "minecraft:barrels/abandoned_camp_barrel",
+          "source": "slr"
         }
       ]
     },

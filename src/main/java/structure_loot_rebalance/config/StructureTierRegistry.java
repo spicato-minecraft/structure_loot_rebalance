@@ -30,6 +30,11 @@ public final class StructureTierRegistry {
 				"minecraft:chests/village_temple");
 		registerRare(defaults, "ruined_portal", 1,
 				"minecraft:chests/ruined_portal");
+		// One tent plus one campsite is about three loot containers (common chest, secret chest, barrels).
+		registerRare(defaults, "abandoned_camp", 3,
+				"minecraft:chests/abandoned_camp_common_chest",
+				"minecraft:chests/abandoned_camp_secret_chest",
+				"minecraft:barrels/abandoned_camp_barrel");
 
 		registerThemed(defaults, LootTier.TIER_1, "shipwreck", 4, false, null, LootTheme.UNDERWATER,
 				"minecraft:chests/shipwreck_treasure");
